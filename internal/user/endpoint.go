@@ -40,13 +40,17 @@ type (
 		Err    string     `json:"error,omitempty"`
 		Meta   *meta.Meta `json:"meta,omitempty"`
 	}
+
+	Config struct {
+		LimPageDef string
+	}
 )
 
-func MakeEndpoints(s Service) Endpoints {
+func MakeEndpoints(s Service, config Config) Endpoints {
 	return Endpoints{
 		Create: makeCreateEndpoint(s),
 		Get:    makeGetEndpoint(s),
-		GetAll: makeGetAllEndpoint(s),
+		GetAll: makeGetAllEndpoint(s, config),
 		Update: makeUpdateEndpoint(s),
 		Delete: makeDeleteEndpoint(s),
 	}
@@ -101,7 +105,7 @@ func makeGetEndpoint(s Service) Controller {
 	}
 }
 
-func makeGetAllEndpoint(s Service) Controller {
+func makeGetAllEndpoint(s Service, config Config) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		v := r.URL.Query()
@@ -121,7 +125,7 @@ func makeGetAllEndpoint(s Service) Controller {
 			return
 		}
 
-		meta, err := meta.New(page, limit, count, "15") //FIXME
+		meta, err := meta.New(page, limit, count, config.LimPageDef)
 		if err != nil {
 			w.WriteHeader(500)
 			json.NewEncoder(w).Encode(&Response{Status: 500, Err: err.Error()})
