@@ -2,13 +2,13 @@ package user
 
 import (
 	"context"
-	"errors"
 
+	"github.com/iGuessImaDev/go_lib_response/response"
 	"github.com/iGuessImaDev/gocourse_meta/meta"
 )
 
 type (
-	Controller func(ctx context.Context, request interface{}) (response interface{}, err error)
+	Controller func(ctx context.Context, request interface{}) (interface{}, error)
 
 	Endpoints struct {
 		Create Controller
@@ -55,24 +55,24 @@ func MakeEndpoints(s Service, config Config) Endpoints {
 }
 
 func makeCreateEndpoint(s Service) Controller {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 
 		req := request.(CreateReq)
 
 		if req.FirstName == "" {
-			return nil, errors.New("first name is required")
+			return nil, response.BadRequestError("first name is required")
 		}
 
 		if req.LastName == "" {
-			return nil, errors.New("last name is required")
+			return nil, response.BadRequestError("last name is required")
 		}
 
 		user, err := s.Create(ctx, req.FirstName, req.LastName, req.Email, req.Phone)
 		if err != nil {
-			return nil, err
+			return nil, response.InternalServerError(err.Error())
 		}
 
-		return user, nil
+		return response.Created("success", user, nil), nil
 	}
 }
 

@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	github.com/go-kit/kit v0.13.0
 	github.com/gorilla/mux v1.8.1
+	github.com/iGuessImaDev/go_lib_response v0.0.2
 	github.com/iGuessImaDev/gocourse_domain v0.0.1
 	github.com/iGuessImaDev/gocourse_meta v0.0.1
 	github.com/joho/godotenv v1.5.1
