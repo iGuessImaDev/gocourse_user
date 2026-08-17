@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -26,6 +27,18 @@ func NewUserHTTPServer(ctx context.Context, endpoints user.Endpoints) http.Handl
 		opts...,
 	)).Methods("POST")
 
+	r.Handle("/users", httptransport.NewServer(
+		endpoint.Endpoint(endpoints.GetAll),
+		decodeGetAllUser, encodeResponse,
+		opts...,
+	)).Methods("GET")
+
+	r.Handle("/users/{id}", httptransport.NewServer(
+		endpoint.Endpoint(endpoints.Get),
+		decodeGetUser, encodeResponse,
+		opts...,
+	)).Methods("GET")
+
 	return r
 }
 
@@ -33,6 +46,32 @@ func decodeCreateUser(_ context.Context, r *http.Request) (interface{}, error) {
 	var req user.CreateReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, response.BadRequestError(fmt.Sprintf("invalid request format: '%v'", err.Error()))
+	}
+
+	return req, nil
+}
+
+func decodeGetUser(_ context.Context, r *http.Request) (interface{}, error) {
+
+	p := mux.Vars(r)
+	req := user.GetReq{
+		ID: p["id"],
+	}
+
+	return req, nil
+}
+
+func decodeGetAllUser(_ context.Context, r *http.Request) (interface{}, error) {
+	v := r.URL.Query()
+
+	limit, _ := strconv.Atoi(v.Get("limit"))
+	page, _ := strconv.Atoi(v.Get("page"))
+
+	req := user.GetAllReq{
+		FirstName: v.Get("first_name"),
+		LastName:  v.Get("last_name"),
+		Limit:     limit,
+		Page:      page,
 	}
 
 	return req, nil
