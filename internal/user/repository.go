@@ -61,7 +61,10 @@ func (repo *repo) Get(ctx context.Context, id string) (*domain.User, error) {
 	result := repo.db.WithContext(ctx).First(&user)
 	if result.Error != nil {
 		repo.log.Println(result.Error)
-		return nil, ErrNotFound{id}
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, ErrNotFound{id}
+		}
+		return nil, result.Error
 	}
 	return &user, nil
 }
