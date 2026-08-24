@@ -23,21 +23,38 @@ func NewUserHTTPServer(ctx context.Context, endpoints user.Endpoints) http.Handl
 
 	r.Handle("/users", httptransport.NewServer(
 		endpoint.Endpoint(endpoints.Create),
-		decodeCreateUser, encodeResponse,
+		decodeCreateUser,
+		encodeResponse,
 		opts...,
 	)).Methods("POST")
 
 	r.Handle("/users", httptransport.NewServer(
 		endpoint.Endpoint(endpoints.GetAll),
-		decodeGetAllUser, encodeResponse,
+		decodeGetAllUser,
+		encodeResponse,
 		opts...,
 	)).Methods("GET")
 
 	r.Handle("/users/{id}", httptransport.NewServer(
 		endpoint.Endpoint(endpoints.Get),
-		decodeGetUser, encodeResponse,
+		decodeGetUser,
+		encodeResponse,
 		opts...,
 	)).Methods("GET")
+
+	r.Handle("/users/{id}", httptransport.NewServer(
+		endpoint.Endpoint(endpoints.Update),
+		decodeUpdateUser,
+		encodeResponse,
+		opts...,
+	)).Methods("PATCH")
+
+	r.Handle("/users/{id}", httptransport.NewServer(
+		endpoint.Endpoint(endpoints.Delete),
+		decodeDeleteUser,
+		encodeResponse,
+		opts...,
+	)).Methods("DELETE")
 
 	return r
 }
@@ -72,6 +89,29 @@ func decodeGetAllUser(_ context.Context, r *http.Request) (interface{}, error) {
 		LastName:  v.Get("last_name"),
 		Limit:     limit,
 		Page:      page,
+	}
+
+	return req, nil
+}
+
+func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
+	var req user.UpdateReq
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, response.BadRequestError(fmt.Sprintf("invalid request format: '%v'", err.Error()))
+	}
+
+	path := mux.Vars(r)
+	req.ID = path["id"]
+
+	return req, nil
+}
+
+func decodeDeleteUser(_ context.Context, r *http.Request) (interface{}, error) {
+
+	p := mux.Vars(r)
+	req := user.DeleteReq{
+		ID: p["id"],
 	}
 
 	return req, nil
