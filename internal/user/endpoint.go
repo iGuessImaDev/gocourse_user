@@ -76,11 +76,11 @@ func makeCreateEndpoint(s Service) Controller {
 		req := request.(CreateReq)
 
 		if req.FirstName == "" {
-			return nil, response.BadRequestError("first name is required")
+			return nil, response.BadRequestError(ErrFirstNameRequired.Error())
 		}
 
 		if req.LastName == "" {
-			return nil, response.BadRequestError("last name is required")
+			return nil, response.BadRequestError(ErrLastNameRequired.Error())
 		}
 
 		user, err := s.Create(ctx, req.FirstName, req.LastName, req.Email, req.Phone)
@@ -99,7 +99,10 @@ func makeGetEndpoint(s Service) Controller {
 		user, err := s.Get(ctx, req.ID)
 
 		if err != nil {
-			return nil, response.NotFoundError(err.Error())
+			if err == ErrUserNotFound {
+				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			}
+			return nil, response.InternalServerError(err.Error())
 		}
 
 		return response.OK("success", user, nil), nil
@@ -141,14 +144,18 @@ func makeUpdateEndpoint(s Service) Controller {
 		req := request.(UpdateReq)
 
 		if req.FirstName != nil && *req.FirstName == "" {
-			return nil, response.BadRequestError("First name is required")
+			return nil, response.BadRequestError(ErrFirstNameRequired.Error())
 		}
 
 		if req.LastName != nil && *req.LastName == "" {
-			return nil, response.BadRequestError("Last name is required")
+			return nil, response.BadRequestError(ErrLastNameRequired.Error())
 		}
 
-		if err := s.Update(ctx, req.ID, req.FirstName, req.LastName, req.Email, req.Phone); err != nil {
+		err := s.Update(ctx, req.ID, req.FirstName, req.LastName, req.Email, req.Phone)
+		if err != nil {
+			if err == ErrUserNotFound {
+				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			}
 			return nil, response.InternalServerError(err.Error())
 		}
 
@@ -164,6 +171,9 @@ func makeDeleteEndpoint(s Service) Controller {
 		err := s.Delete(ctx, req.ID)
 
 		if err != nil {
+			if err == ErrUserNotFound {
+				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			}
 			return nil, response.InternalServerError(err.Error())
 		}
 		return response.OK("success", nil, nil), nil

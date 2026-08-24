@@ -61,7 +61,7 @@ func (repo *repo) Get(ctx context.Context, id string) (*domain.User, error) {
 	result := repo.db.WithContext(ctx).First(&user)
 	if result.Error != nil {
 		repo.log.Println(result.Error)
-		return nil, result.Error
+		return nil, ErrUserNotFound
 	}
 	return &user, nil
 }
@@ -69,10 +69,17 @@ func (repo *repo) Get(ctx context.Context, id string) (*domain.User, error) {
 func (repo *repo) Delete(ctx context.Context, id string) error {
 	user := domain.User{ID: id}
 
-	if err := repo.db.WithContext(ctx).Delete(&user).Error; err != nil {
-		repo.log.Println(err)
-		return err
+	result := repo.db.WithContext(ctx).Delete(&user)
+	if result.Error != nil {
+		repo.log.Println(result.Error)
+		return result.Error
 	}
+
+	if result.RowsAffected == 0 {
+		repo.log.Printf("user %s doesn't exist", id)
+		return ErrUserNotFound
+	}
+
 	repo.log.Println("user deleted with id ", user.ID)
 	return nil
 }
@@ -96,10 +103,17 @@ func (repo *repo) Update(ctx context.Context, id string, firstName *string, last
 		values["phone"] = phone
 	}
 
-	if err := repo.db.WithContext(ctx).Model(&domain.User{}).Where("id", id).Updates(values).Error; err != nil {
-		repo.log.Println(err)
-		return err
+	result := repo.db.WithContext(ctx).Model(&domain.User{}).Where("id", id).Updates(values)
+	if result.Error != nil {
+		repo.log.Println(result.Error)
+		return result.Error
 	}
+
+	if result.RowsAffected == 0 {
+		repo.log.Printf("user %s doesn't exist", id)
+		return ErrUserNotFound
+	}
+
 	return nil
 }
 
