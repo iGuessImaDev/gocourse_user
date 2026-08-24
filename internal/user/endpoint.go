@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/iGuessImaDev/go_lib_response/response"
 	"github.com/iGuessImaDev/gocourse_meta/meta"
@@ -99,8 +100,8 @@ func makeGetEndpoint(s Service) Controller {
 		user, err := s.Get(ctx, req.ID)
 
 		if err != nil {
-			if err == ErrUserNotFound {
-				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			if errors.As(err, &ErrNotFound{}) {
+				return nil, response.NotFoundError(err.Error())
 			}
 			return nil, response.InternalServerError(err.Error())
 		}
@@ -153,8 +154,8 @@ func makeUpdateEndpoint(s Service) Controller {
 
 		err := s.Update(ctx, req.ID, req.FirstName, req.LastName, req.Email, req.Phone)
 		if err != nil {
-			if err == ErrUserNotFound {
-				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			if errors.As(err, &ErrNotFound{}) {
+				return nil, response.NotFoundError(err.Error())
 			}
 			return nil, response.InternalServerError(err.Error())
 		}
@@ -171,8 +172,8 @@ func makeDeleteEndpoint(s Service) Controller {
 		err := s.Delete(ctx, req.ID)
 
 		if err != nil {
-			if err == ErrUserNotFound {
-				return nil, response.NotFoundError(ErrUserNotFound.Error())
+			if errors.As(err, &ErrNotFound{}) {
+				return nil, response.NotFoundError(err.Error())
 			}
 			return nil, response.InternalServerError(err.Error())
 		}
